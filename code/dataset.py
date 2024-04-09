@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import torch
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 from torchvision.io import read_image
 from torchvision.transforms import ToTensor
 
@@ -23,6 +23,11 @@ class MVSA(Dataset):
 
 
 	def __getitem__(self, idx):
+		# image
+		image_path = os.path.join(self.data_dir, '{}.jpg'.format(self.labels.iloc[idx, 0]))
+		image = read_image(image_path)
+		if self.transform:
+			image = self.transform(image)
 		# text
 		text = self.labels.iloc[idx, 1]
 		input_ids = torch.empty((self.max_len))
@@ -37,13 +42,22 @@ class MVSA(Dataset):
 				)
 				input_ids = encoding['input_ids'].squeeze(0)
 				attention_mask = encoding['attention_mask'].squeeze(0)
-		# image
-		image_path = os.path.join(self.data_dir, '{}.jpg'.format(self.labels.iloc[idx, 0]))
-		image = read_image(image_path)
-		if self.transform:
-			image = self.transform(image)
 		# label: 'positive': 0, 'neutral': 1, 'negative': 2
 		label = self.labels.iloc[idx, 2]
 		if self.target_transform:
 			label = self.target_transform(label)
 		return image, input_ids, attention_mask, label
+
+
+	def collate_fn(self, batch):
+	    # support variable-sized image
+	    image = [item[0] for item in batch]
+	    # text
+	    input_ids = [item[1] for item in batch]
+	    input_ids = torch.stack(input_ids)
+	    attention_mask = [item[2] for item in batch]
+	    attention_mask = torch.stack(attention_mask)
+	    # label
+	    label = [item[3] for item in batch]
+	    label = torch.LongTensor(label)
+	    return [image, input_ids, attention_mask, label]
