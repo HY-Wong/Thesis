@@ -50,14 +50,14 @@ class MVSA(Dataset):
 
 
 	def collate_fn(self, batch):
-	    # support variable-sized image
-	    image = [item[0] for item in batch]
-	    # text
-	    input_ids = [item[1] for item in batch]
-	    input_ids = torch.stack(input_ids)
-	    attention_mask = [item[2] for item in batch]
-	    attention_mask = torch.stack(attention_mask)
-	    # label
-	    label = [item[3] for item in batch]
-	    label = torch.LongTensor(label)
-	    return [image, input_ids, attention_mask, label]
+		# support variable-sized image
+		image = [item[0] for item in batch]
+		# text
+		input_ids = [item[1] for item in batch]
+		input_ids = torch.stack(input_ids)
+		attention_mask = [item[2] for item in batch]
+		attention_mask = torch.stack(attention_mask)
+		# label
+		label = [item[3] for item in batch]
+		label = torch.LongTensor(label)
+		return [image, input_ids, attention_mask, label]
