@@ -377,8 +377,6 @@ class ITIN(nn.Module):
 		# (batch_size, d_dim)
 		c = torch.matmul(z.transpose(-2, -1), a).squeeze(dim=-1)
 
-		c = c * 0
-
 		# Multimodal Sentiment Classification
 		# (batch_size, d_dim)
 		f1 = self.mlp_sentiment_visual(torch.cat((v, c), dim=-1))
