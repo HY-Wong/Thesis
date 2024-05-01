@@ -301,7 +301,7 @@ class ITIN(nn.Module):
 		if self.text_baseline:
 			self.fc_sentiment_text = nn.Linear(self.d_dim, self.num_classes)
 		
-		# Cross-Modal Alignmen Module
+		# Cross-Modal Alignment Module
 		self.cross_attn = Attention(q_dim=self.d_dim, k_dim=self.d_dim, embed_dim=self.k_dim)
 		
 		# Cross-Modal Gating Module
@@ -357,7 +357,7 @@ class ITIN(nn.Module):
 		# (batch_size, m, d_dim)
 		r = self.fc_region(region_features)
 		
-		# Cross-Modal Alignmen Module
+		# Cross-Modal Alignment Module
 		# (batch_size, m, d_dim)
 		u = self.cross_attn(r, w)
 		
