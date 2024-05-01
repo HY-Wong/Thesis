@@ -102,10 +102,18 @@ class ObjectDetector(nn.Module):
 			# zeros tensors (empty detections) if if necessary
 			if boxes.shape[0] < self.detections_per_img:
 				num_fill = self.detections_per_img - boxes.shape[0]
-				boxes = torch.cat((boxes, torch.zeros(num_fill, boxes.shape[1], dtype=torch.float32, device=device)))
-				scores = torch.cat((scores, torch.zeros(num_fill, dtype=torch.float32, device=device)))
-				labels = torch.cat((labels, torch.zeros(num_fill, dtype=torch.int64, device=device)))
-				box_features = torch.cat((box_features, torch.zeros(num_fill, box_features.shape[1], dtype=torch.float32, device=device)))
+				boxes = torch.cat(
+					(boxes, torch.zeros(num_fill, boxes.shape[1], dtype=torch.float32, device=device))
+				)
+				scores = torch.cat(
+					(scores, torch.zeros(num_fill, dtype=torch.float32, device=device))
+				)
+				labels = torch.cat(
+					(labels, torch.zeros(num_fill, dtype=torch.int64, device=device))
+				)
+				box_features = torch.cat(
+					(box_features, torch.zeros(num_fill, box_features.shape[1], dtype=torch.float32, device=device))
+				)
 
 			all_boxes.append(boxes)
 			all_scores.append(scores)
@@ -186,7 +194,7 @@ class VisualEncoder(nn.Module):
 		# (batch_size, in_features) 
 		# resnet18: in_features = 512
 		x = self.layers(x)
-		x = x.squeeze()
+		x = x.squeeze(dim=(2, 3))
 		return x
 
 
@@ -270,8 +278,8 @@ class Attention(nn.Module):
 
 class ITIN(nn.Module):
 	def __init__(
-		self, visual_model: str, text_model: str, rf_dim: int, d_dim: int, k_dim: int, 
-		num_classes: int = 3, _lambda: int = 0.2
+		self, visual_model: str, text_model: str, rf_dim: int, d_dim: int, k_dim: int, num_classes: int = 3, 
+		_lambda: int = 0.2, visual_baseline: bool = False, text_baseline: bool = False
 	):
 		super().__init__()
 		self.rf_dim = rf_dim
@@ -279,38 +287,72 @@ class ITIN(nn.Module):
 		self.k_dim = k_dim
 		self.num_classes = num_classes
 		self._lambda = _lambda
+		self.visual_baseline = visual_baseline
+		self.text_baseline = text_baseline
 
 		self.visual_encoder = VisualEncoder(model=visual_model)
 		self.text_encoder = TextEncoder(model=text_model, d_dim=d_dim)
 		# linear project to a d-dimentional regional feature
 		self.fc_region = nn.Linear(self.rf_dim, self.d_dim)
+
+		if self.visual_baseline:
+			self.fc_sentiment_visual = nn.Linear(self.visual_encoder.in_features, self.num_classes)
+
+		if self.text_baseline:
+			self.fc_sentiment_text = nn.Linear(self.d_dim, self.num_classes)
 		
 		# Cross-Modal Alignmen Module
 		self.cross_attn = Attention(q_dim=self.d_dim, k_dim=self.d_dim, embed_dim=self.k_dim)
 		
 		# Cross-Modal Gating Module
+		self.sigmoid = nn.Sigmoid()
 		self.softmax = nn.Softmax(dim=-1)
 		self.relu = nn.ReLU()
-		self.fc_gating1 = nn.Linear(self.d_dim * 2, self.d_dim)
-		self.fc_gating2 = nn.Linear(self.d_dim, 1)
+		self.fc_gating = nn.Linear(self.d_dim * 2, self.d_dim)
+		self.mlp_gating = nn.Sequential(
+			nn.Linear(self.d_dim, self.d_dim),
+			nn.ReLU(),
+			nn.Linear(self.d_dim, 1),
+			nn.ReLU()
+		)
 
 		# Multimodal Sentiment Classification
-		self.fc_sentiment1 = nn.Linear(self.visual_encoder.in_features + self.d_dim, self.d_dim)
-		self.fc_sentiment2 = nn.Linear(self.d_dim * 2, self.d_dim)
-		self.fc_sentiment3 = nn.Linear(self.d_dim, self.num_classes)
-
+		self.mlp_sentiment_visual = nn.Sequential(
+			nn.Linear(self.visual_encoder.in_features + self.d_dim, self.d_dim),
+			nn.ReLU(),
+			nn.Linear(self.d_dim, d_dim),
+			nn.ReLU()
+		)
+		self.mlp_sentiment_text = nn.Sequential(
+			nn.Linear(self.d_dim * 2, self.d_dim),
+			nn.ReLU(),
+			nn.Linear(self.d_dim, self.d_dim),
+			nn.ReLU()
+		)
+		self.fc_sentiment = nn.Linear(self.d_dim, self.num_classes)
 
 	# def initialize_parameters(self):
 	# 	# todo: suitable parameters initialization of each component
 	# 	pass
 
 
-	def forward(self, images: List[torch.Tensor], input_ids: torch.Tensor, attention_mask: torch.Tensor, region_features: torch.Tensor):
-		# (batch_size, 512)
+	def forward(
+		self, images: List[torch.Tensor], input_ids: torch.Tensor, attention_mask: torch.Tensor, 
+		region_features: torch.Tensor
+	):
+		# (batch_size, in_features) 
 		v = self.visual_encoder(images)
+		if self.visual_baseline:
+			# (batch_size, num_classes) 
+			x = self.fc_sentiment_visual(v)
+			return x
 		
 		# (batch_size, seq_length, d_dim), (batch_size, d_dim)
 		w, s = self.text_encoder(input_ids, attention_mask)
+		if self.text_baseline:
+			# (batch_size, num_classes) 
+			x = self.fc_sentiment_text(s)
+			return x
 		
 		# (batch_size, m, d_dim)
 		r = self.fc_region(region_features)
@@ -321,27 +363,30 @@ class ITIN(nn.Module):
 		
 		# Cross-Modal Gating Module
 		# (batch_size, m)
-		g = self.softmax(torch.sum(r * u, dim=-1))
+		g = self.sigmoid(torch.sum(r * u, dim=-1))
 		# (batch_size, m, d_dim * 2)
 		c = g.unsqueeze(dim=-1) * torch.cat((r, u), dim=-1)
 		# (batch_size, m, d_dim)
-		o = self.relu(self.fc_gating1(c))
+		o = self.relu(self.fc_gating(c))
 		z = o + r
 		# (batch_size, m)
-		a = self.relu(self.fc_gating2(z))
+		a = self.relu(self.mlp_gating(z))
 		a = a.squeeze(dim=-1)
 		a = self.softmax(a)
 		a = a.unsqueeze(dim=-1)
 		# (batch_size, d_dim)
 		c = torch.matmul(z.transpose(-2, -1), a).squeeze(dim=-1)
 
+		c = c * 0
+
 		# Multimodal Sentiment Classification
 		# (batch_size, d_dim)
-		f1 = self.fc_sentiment1(torch.cat((v, c), dim=-1))
+		f1 = self.mlp_sentiment_visual(torch.cat((v, c), dim=-1))
 		# (batch_size, d_dim)
-		f2 = self.fc_sentiment2(torch.cat((s, c), dim=-1))
+		f2 = self.mlp_sentiment_text(torch.cat((s, c), dim=-1))
 		# (batch_size, d_dim)
 		f = self._lambda * f1 + (1 - self._lambda) * f2
 		# (batch_size, num_classes)
-		x = self.fc_sentiment3(f)
-		return x
+		x = self.fc_sentiment(f)
+		# return gating value g for inspection
+		return x, g
