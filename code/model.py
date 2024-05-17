@@ -216,7 +216,7 @@ class ITIN(nn.Module):
 		o = self.relu(self.fc_gating(c))
 		z = o + r
 		# (batch_size, m)
-		a = self.relu(self.mlp_gating(z))
+		a = self.mlp_gating(z)
 		a = a.squeeze(dim=-1)
 		a = self.softmax(a)
 		a = a.unsqueeze(dim=-1)
