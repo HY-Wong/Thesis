@@ -1,26 +1,12 @@
-import numpy as np
-import pandas as pd
 import os
 import re
-import subprocess
+import json
+import numpy as np
+import pandas as pd
 
 from collections import defaultdict
 from typing import Union
 from torchvision.io import read_image
-
-
-def convert_to_utf8(file_path: str, from_encoding: Union[str, None] = None) -> str:
-	if from_encoding:
-		result = subprocess.run(
-			['iconv', '-f', from_encoding, '-t', 'UTF-8', '-c', file_path], 
-			stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-		)
-	else:
-		result = subprocess.run(
-			['iconv', '-t', 'UTF-8', '-c', file_path], 
-			stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-		)
-	return result.stdout.strip()
 
 
 def combine_text_image_label(text_label: Union[str, None], image_label: Union[str, None]) -> str:
@@ -45,7 +31,7 @@ def remove_url(text: str):
 	return re.sub(url_pattern, '', text)
 
 
-data_dir = './../data'
+data_dir = '../data'
 label_mapping = {'positive': 0, 'neutral': 1, 'negative': 2}
 
 # MVSA-Single
@@ -59,7 +45,9 @@ with open(os.path.join(data_dir, 'MVSA_Single', 'labelResultAll.txt'), 'r') as a
 
 		# read the text and store it into the CSV file
 		txt_path = os.path.join(data_dir, 'MVSA_Single', 'data', f'{split_line[0]}.txt')
-		text = convert_to_utf8(txt_path, 'GB2312')
+		with open(txt_path, 'rb') as f:
+			text = f.read()
+			text = text.decode('ascii', 'ignore')
 
 		(text_label, image_label) = split_line[1].split(',')
 		# data.append({
@@ -71,18 +59,36 @@ with open(os.path.join(data_dir, 'MVSA_Single', 'labelResultAll.txt'), 'r') as a
 df_mvsa_single = pd.DataFrame(data)
 # print(df_mvsa_single.head())
 df_mvsa_single = df_mvsa_single[df_mvsa_single['Label'] != 'inconsistent']
+df_mvsa_single['Text'] = df_mvsa_single['Text'].apply(remove_url)
 print('MVSA-Single')
 print(df_mvsa_single['Label'].value_counts())
 unique_texts_count = len(df_mvsa_single['Text'].value_counts())
 total_texts_count = len(df_mvsa_single)
 print(f'{unique_texts_count} unique texts out of {total_texts_count} data')
 
-# required for creating a custom dataset in PyTorch
 df_mvsa_single['Label'] = df_mvsa_single['Label'].map(label_mapping)
-df_mvsa_single['Text'] = df_mvsa_single['Text'].apply(remove_url)
 # ensure that NaN values are replaced with empty strings
 df_mvsa_single.fillna('', inplace=True)
-df_mvsa_single.to_csv(os.path.join(data_dir, 'MVSA_Single', 'MVSA_Single.csv'), index=False)
+# df_mvsa_single.to_csv(os.path.join(data_dir, 'MVSA_Single', 'all.csv'), index=False)
+
+###
+with open(os.path.join(data_dir, 'MVSA_Single', 'train.json'), 'r') as file:
+	train_data = json.load(file)
+train_ids = [item['id'] for item in train_data]
+with open(os.path.join(data_dir, 'MVSA_Single', 'val.json'), 'r') as file:
+	val_data = json.load(file)
+val_ids = [item['id'] for item in val_data]
+with open(os.path.join(data_dir, 'MVSA_Single', 'test.json'), 'r') as file:
+	test_data = json.load(file)
+test_ids = [item['id'] for item in test_data]
+
+# required for creating a custom dataset in PyTorch
+# train_df = df_mvsa_single[df_mvsa_single['ID'].isin(train_ids)]
+# train_df.to_csv(os.path.join(data_dir, 'MVSA_Single', 'train.csv'), index=False)
+# val_df = df_mvsa_single[df_mvsa_single['ID'].isin(val_ids)]
+# val_df.to_csv(os.path.join(data_dir, 'MVSA_Single', 'val.csv'), index=False)
+# test_df = df_mvsa_single[df_mvsa_single['ID'].isin(test_ids)]
+# test_df.to_csv(os.path.join(data_dir, 'MVSA_Single', 'test.csv'), index=False)
 
 # MVSA-Multiple
 data = []
@@ -92,9 +98,9 @@ with open(os.path.join(data_dir, 'MVSA_Multiple', 'labelResultAll.txt'), 'r') as
 	
 	for line in annotations_file:
 		split_line = line.strip().split()
-
+		
 		# ignore empty image files and truncated images
-		image_path = os.path.join(data_dir, 'MVSA_Multiple', 'data', '{}.jpg'.format(split_line[0]))
+		image_path = os.path.join(data_dir, 'MVSA_Multiple', 'data', f'{split_line[0]}.jpg')
 		try:
 			image = read_image(image_path)
 		except RuntimeError:
@@ -102,7 +108,9 @@ with open(os.path.join(data_dir, 'MVSA_Multiple', 'labelResultAll.txt'), 'r') as
 
 		# read the text and store it into the CSV file
 		txt_path = os.path.join(data_dir, 'MVSA_Multiple', 'data', f'{split_line[0]}.txt')
-		text = convert_to_utf8(txt_path)
+		with open(txt_path, 'rb') as f:
+			text = f.read()
+			text = text.decode('ascii', 'ignore')
 
 		text_label_dict = defaultdict(lambda: 0)
 		image_label_dict = defaultdict(lambda: 0)
@@ -125,15 +133,33 @@ with open(os.path.join(data_dir, 'MVSA_Multiple', 'labelResultAll.txt'), 'r') as
 df_mvsa_multiple = pd.DataFrame(data)
 # print(df_mvsa_multiple.head())
 df_mvsa_multiple = df_mvsa_multiple[~df_mvsa_multiple['Label'].isin(['invalid', 'inconsistent'])]
+df_mvsa_multiple['Text'] = df_mvsa_multiple['Text'].apply(remove_url)
 print('MVSA-Multiple')
 print(df_mvsa_multiple['Label'].value_counts())
 unique_texts_count = len(df_mvsa_multiple['Text'].value_counts())
 total_texts_count = len(df_mvsa_multiple)
 print(f'{unique_texts_count} unique texts out of {total_texts_count} data')
 
-# required for creating a custom dataset in PyTorch
 df_mvsa_multiple['Label'] = df_mvsa_multiple['Label'].map(label_mapping)
-df_mvsa_multiple['Text'] = df_mvsa_multiple['Text'].apply(remove_url)
 # ensure that NaN values are replaced with empty strings
 df_mvsa_multiple.fillna('', inplace=True)
-df_mvsa_multiple.to_csv(os.path.join(data_dir, 'MVSA_Multiple', 'MVSA_Multiple.csv'), index=False)
+# df_mvsa_multiple.to_csv(os.path.join(data_dir, 'MVSA_Multiple', 'all.csv'), index=False)
+
+###
+with open(os.path.join(data_dir, 'MVSA_Multiple', 'train.json'), 'r') as file:
+	train_data = json.load(file)
+train_ids = [item['id'] for item in train_data]
+with open(os.path.join(data_dir, 'MVSA_Multiple', 'val.json'), 'r') as file:
+	val_data = json.load(file)
+val_ids = [item['id'] for item in val_data]
+with open(os.path.join(data_dir, 'MVSA_Multiple', 'test.json'), 'r') as file:
+	test_data = json.load(file)
+test_ids = [item['id'] for item in test_data]
+
+# required for creating a custom dataset in PyTorch
+# train_df = df_mvsa_multiple[df_mvsa_multiple['ID'].isin(train_ids)]
+# train_df.to_csv(os.path.join(data_dir, 'MVSA_Multiple', 'train.csv'), index=False)
+# val_df = df_mvsa_multiple[df_mvsa_multiple['ID'].isin(val_ids)]
+# val_df.to_csv(os.path.join(data_dir, 'MVSA_Multiple', 'val.csv'), index=False)
+# test_df = df_mvsa_multiple[df_mvsa_multiple['ID'].isin(test_ids)]
+# test_df.to_csv(os.path.join(data_dir, 'MVSA_Multiple', 'test.csv'), index=False)
