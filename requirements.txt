@@ -1,0 +1,15 @@
+matplotlib==3.8.3
+nltk==3.9.1
+numpy==1.26.3
+open_clip_torch==2.26.1
+pandas==2.2.0
+Pillow==9.5.0
+pyarrow==15.0.0
+PyYAML==6.0.1
+scikit_learn==1.4.1.post1
+tensorboard==2.16.2
+textblob==0.18.0.post0
+torch==2.3.1
+torchvision==0.18.1
+tqdm==4.66.2
+transformers==4.43.3
