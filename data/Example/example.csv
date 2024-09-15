@@ -1,0 +1,3 @@
+ID,Text,Label,Objects_LLM,Objects_TextBlob
+1,"Waxwing trills, Chickadees calling ""here sweetie"", enthusiastic athletes, blue sky & snow at #ualbertafarm #Ualberta",1,"['waxwing', 'trills', 'chickadees', 'athletes', 'sky', 'snow', 'farm']","['trills', 'athletes', 'sky', 'snow']"
+2,This is Bonnie and she loves you. Alt text: A brown and white fuzzy dog sits by a wooden chair and table.,0,"['dog', 'chair', 'table']","['text', 'brown', 'fuzzy', 'dog', 'sits', 'chair', 'table']"
