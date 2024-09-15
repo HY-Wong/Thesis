@@ -1,15 +1,15 @@
 model:
   visual:
-    model: "resnet"
+    model: "clip"
     train_baseline: false
-    finetune: true
+    finetune: false
     embedding_dim: 512
   text:
-    model: "bert"
+    model: "clip"
     train_baseline: false
     max_len: 100
     num_layers: 2
-    embedding_dim: 768
+    embedding_dim: 512
     dropout: 0.25
   region:
     model: "fasterrcnn_bua"
@@ -19,9 +19,9 @@ model:
   without_gating: false
   cross_modal_baseline: false
   context_baseline: false
-  hidden_dim1: 1024
+  hidden_dim1: 512
   hidden_dim2: 512
-  embedding_dim: 1024
+  embedding_dim: 512
   dropout: 0.25
   _lambda: 0.2
   num_attns: 4
@@ -36,7 +36,7 @@ training:
   lr: 0.001
   weight_decay: 0.0001
   lr_decay_factor: 0.1
-  lr_decay_step_size: 10
+  lr_decay_step_size: 3
   grad_clip: 1.0
   use_class_weight: false
   gamma: 0.0
