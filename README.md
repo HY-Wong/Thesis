@@ -1,5 +1,6 @@
+## Improve Multimodal Sentiment Analysis with Open-Set Object Detection
 
-# Improve Multimodal Sentiment Analysis with Open-Set Object Detection
+![ITIN Framework](image/itin-framework.png)
 
 ## Requirements
 
@@ -27,5 +28,6 @@ pip install -r requirements.txt
 
 To run the project, use the following command:
 ```bash
+cd code
 python itin.py
 ```
