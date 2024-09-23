@@ -36,7 +36,7 @@ training:
   lr: 0.001
   weight_decay: 0.0001
   lr_decay_factor: 0.1
-  lr_decay_step_size: 10
+  lr_decay_step_size: 3
   grad_clip: 1.0
   use_class_weight: false
   gamma: 0.0
