@@ -33,15 +33,13 @@ You can download the **MVSA dataset** from the following sources:
 - **Training/Test Split**: The training-test split follows the methodology outlined in this publication: [CLMLF GitHub](https://github.com/Link-Li/CLMLF)
 - **Processed Dataset**: The processed dataset, including precomputed features, can be downloaded from this [Google Drive link](https://drive.google.com/drive/folders/1Z166RQc7tun694Gr7OPRn_ghDhtc51hN)
 
-#### Processed Dataset Contents:
 The zip file from the above link contains the following:
 
 - `data`: The original MVSA image and text data pairs.
 - `features_fasterrcnn_bua`: Precomputed region features using a pretrained Faster R-CNN model, implemented by [Bottom-Up Attention](https://github.com/MILVLG/bottom-up-attention.pytorch).
 - `features_grounding_dino[1-5]`: Precomputed region features using Grounding DINO with five different input text prompts.
 
-#### Setup:
-- Once downloaded, place the contents of the zip file under the `data/` directory.
+Once downloaded, place the contents of the zip file under the `data/` directory.
 
 ### Pre-trained Models: 
 
