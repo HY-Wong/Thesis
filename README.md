@@ -25,7 +25,7 @@ pip install -r requirements.txt
 
 ## Usage
 
-1. Dataset
+### Dataset
 
 You can download the **MVSA dataset** from the following sources:
 
@@ -36,14 +36,14 @@ You can download the **MVSA dataset** from the following sources:
 #### Processed Dataset Contents:
 The zip file from the above link contains the following:
 
-1. `data`: The original MVSA image and text data pairs.
-2. `features_fasterrcnn_bua`: Precomputed region features using a pretrained Faster R-CNN model, implemented by [Bottom-Up Attention](https://github.com/MILVLG/bottom-up-attention.pytorch).
-3. `features_grounding_dino[1-5]`: Precomputed region features using Grounding DINO with five different input text prompts.
+- `data`: The original MVSA image and text data pairs.
+- `features_fasterrcnn_bua`: Precomputed region features using a pretrained Faster R-CNN model, implemented by [Bottom-Up Attention](https://github.com/MILVLG/bottom-up-attention.pytorch).
+- `features_grounding_dino[1-5]`: Precomputed region features using Grounding DINO with five different input text prompts.
 
 #### Setup:
 - Once downloaded, place the contents of the zip file under the `data/` directory.
 
-2. Pre-trained Models: 
+### Pre-trained Models: 
 
 The pre-trained models for each dataset can be found in the following table:
 
@@ -61,7 +61,7 @@ Download the saved models:
 <!-- 20240903_0052_mvsa_multiple -->
 <!-- 20240910_2255_mvsa_multiple -->
 
-3. Train the Model
+### Train the Model
 
 To train the model, use the following command:
 
@@ -74,7 +74,7 @@ python itin.py --cfg configs/itin_base.yaml --dataset mvsa_single --random_seed 
 - --dataset: define the dataset to use (mvsa_single or mvsa_multiple).
 - --random_seed: set a seed for initialization.
 
-4. Test the Model
+### Test the Model
 
 To test the model with a pre-trained checkpoint, run the following command:
 
@@ -88,7 +88,7 @@ python itin.py --cfg configs/itin_base.yaml --dataset mvsa_single --load_model p
 
 ## Results
 
-1. Performance Summary:
+### Performance Summary:
 
 | **Model**             | **MVSA-Single** | **MVSA-Single** | **MVSA-Multiple** | **MVSA-Multiple** |
 |-----------------------|-----------------|-----------------|-------------------|-------------------|
@@ -97,8 +97,8 @@ python itin.py --cfg configs/itin_base.yaml --dataset mvsa_single --load_model p
 | ITIN-CLIP             | 0.7160          | 0.7051          | 0.6960            | 0.6393            |
 | ITIN-CLIP-GDINO       | **0.7733**      | **0.7571**      | 0.6992            | 0.6473            |
 | ITIN (Zhu et al. 2023)| 0.7519          | 0.7497          | **0.7352**        | **0.7349**        |
-
-2. Visualization Example:
+ 
+### Visualization Example:
 
 Below are visualizations of three examples from the test data.
 
