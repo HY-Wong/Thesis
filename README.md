@@ -31,7 +31,7 @@ You can download the **MVSA dataset** from the following sources:
 
 - **MVSA dataset**: [MVSA Sentiment Analysis Dataset](https://mcrlab.net/research/mvsa-sentiment-analysis-on-multi-view-social-data/)
 - **Training/Test Split**: The training-test split follows the methodology outlined in this publication: [CLMLF GitHub](https://github.com/Link-Li/CLMLF)
-- **Processed Dataset**: The processed dataset, including precomputed features, can be downloaded from this [Google Drive link](https://drive.google.com/drive/folders/1Z166RQc7tun694Gr7OPRn_ghDhtc51hN)
+- **Processed Dataset**: The processed dataset, including precomputed features, can be downloaded from [Dataset Link](https://drive.google.com/drive/folders/1Z166RQc7tun694Gr7OPRn_ghDhtc51hN)
 
 The zip file from the above link contains the following:
 
@@ -41,23 +41,9 @@ The zip file from the above link contains the following:
 
 Once downloaded, place the contents of the zip file under the `data/` directory.
 
-### Pre-trained Models: 
+### Downloading Pre-trained Models
 
-The pre-trained models for each dataset can be found in the following table:
-
-| **Model**            | **MVSA-Single**         | **MVSA-Multiple**         |
-|----------------------|-------------------------|---------------------------|
-| ITIN                 | [link1](#link1)         | [link2](#link2)           |
-| ITIN-CLIP            | [link3](#link3)         | [link4](#link4)           |
-| ITIN-CLIP-GDINO      | [link5](#link5)         | [link6](#link6)           |
-
-Download the saved models:
-<!-- 20240901_1908_mvsa_single -->
-<!-- 20240903_0048_mvsa_single -->
-<!-- 20240910_2038_mvsa_single -->
-<!-- 20240901_1917_mvsa_multiple -->
-<!-- 20240903_0052_mvsa_multiple -->
-<!-- 20240910_2255_mvsa_multiple -->
+Access and download the pre-trained models for the `mvsa_single` and `mvsa_multiple` datasets. These models include checkpoints for each variant: **ITIN**, **ITIN-CLIP**, and **ITIN-CLIP-GDINO**. You can find them in [Pre-trained Models Link](https://drive.google.com/drive/folders/1V9ap2Nf4SsIsmIzSblm0qanhSG1yqSX8)
 
 ### Train the Model
 
