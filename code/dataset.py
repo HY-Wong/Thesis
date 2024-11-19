@@ -7,6 +7,9 @@ from PIL import Image
 
 
 class Dataset(Dataset):
+	"""
+	A custom dataset class for loading and processing image-text data with region-based features.
+	"""
 	def __init__(
 		self, annotations_file: str, data_dir: str, cfg, transform=None, tokenizer=None
 	):

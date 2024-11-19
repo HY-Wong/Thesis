@@ -9,7 +9,10 @@ from typing import Union
 from torchvision.io import read_image
 
 
-def combine_text_image_label(text_label: Union[str, None], image_label: Union[str, None]) -> str:
+def combine_text_image_label(text_label: Union[str, None], image_label: Union[str, None]):
+	"""
+	Generate a single sentiment label for each image-text pair.
+	"""
 	# invalid labels
 	if text_label == None or image_label == None:
 		return 'invalid'
@@ -26,7 +29,9 @@ def combine_text_image_label(text_label: Union[str, None], image_label: Union[st
 
 
 def remove_url(text: str):
-	# remove URLs, 'http', 'http:', 'http:/', and 'https:/'
+	"""
+	Remove URLs matching the patterns: 'http', 'http:', 'http:/', and 'https:/'.
+	"""
 	url_pattern = r'http[s]?\S+'
 	return re.sub(url_pattern, '', text)
 
@@ -69,9 +74,9 @@ print(f'{unique_texts_count} unique texts out of {total_texts_count} data')
 df_mvsa_single['Label'] = df_mvsa_single['Label'].map(label_mapping)
 # ensure that NaN values are replaced with empty strings
 df_mvsa_single.fillna('', inplace=True)
-# df_mvsa_single.to_csv(os.path.join(data_dir, 'MVSA_Single', 'all.csv'), index=False)
+df_mvsa_single.to_csv(os.path.join(data_dir, 'MVSA_Single', 'all.csv'), index=False)
 
-###
+# the training-test split follows CLMLF model
 with open(os.path.join(data_dir, 'MVSA_Single', 'train.json'), 'r') as file:
 	train_data = json.load(file)
 train_ids = [item['id'] for item in train_data]
@@ -83,12 +88,12 @@ with open(os.path.join(data_dir, 'MVSA_Single', 'test.json'), 'r') as file:
 test_ids = [item['id'] for item in test_data]
 
 # required for creating a custom dataset in PyTorch
-# train_df = df_mvsa_single[df_mvsa_single['ID'].isin(train_ids)]
-# train_df.to_csv(os.path.join(data_dir, 'MVSA_Single', 'train.csv'), index=False)
-# val_df = df_mvsa_single[df_mvsa_single['ID'].isin(val_ids)]
-# val_df.to_csv(os.path.join(data_dir, 'MVSA_Single', 'val.csv'), index=False)
-# test_df = df_mvsa_single[df_mvsa_single['ID'].isin(test_ids)]
-# test_df.to_csv(os.path.join(data_dir, 'MVSA_Single', 'test.csv'), index=False)
+train_df = df_mvsa_single[df_mvsa_single['ID'].isin(train_ids)]
+train_df.to_csv(os.path.join(data_dir, 'MVSA_Single', 'train.csv'), index=False)
+val_df = df_mvsa_single[df_mvsa_single['ID'].isin(val_ids)]
+val_df.to_csv(os.path.join(data_dir, 'MVSA_Single', 'val.csv'), index=False)
+test_df = df_mvsa_single[df_mvsa_single['ID'].isin(test_ids)]
+test_df.to_csv(os.path.join(data_dir, 'MVSA_Single', 'test.csv'), index=False)
 
 # MVSA-Multiple
 data = []
@@ -143,9 +148,9 @@ print(f'{unique_texts_count} unique texts out of {total_texts_count} data')
 df_mvsa_multiple['Label'] = df_mvsa_multiple['Label'].map(label_mapping)
 # ensure that NaN values are replaced with empty strings
 df_mvsa_multiple.fillna('', inplace=True)
-# df_mvsa_multiple.to_csv(os.path.join(data_dir, 'MVSA_Multiple', 'all.csv'), index=False)
+df_mvsa_multiple.to_csv(os.path.join(data_dir, 'MVSA_Multiple', 'all.csv'), index=False)
 
-###
+# the training-test split follows CLMLF model
 with open(os.path.join(data_dir, 'MVSA_Multiple', 'train.json'), 'r') as file:
 	train_data = json.load(file)
 train_ids = [item['id'] for item in train_data]
@@ -157,9 +162,9 @@ with open(os.path.join(data_dir, 'MVSA_Multiple', 'test.json'), 'r') as file:
 test_ids = [item['id'] for item in test_data]
 
 # required for creating a custom dataset in PyTorch
-# train_df = df_mvsa_multiple[df_mvsa_multiple['ID'].isin(train_ids)]
-# train_df.to_csv(os.path.join(data_dir, 'MVSA_Multiple', 'train.csv'), index=False)
-# val_df = df_mvsa_multiple[df_mvsa_multiple['ID'].isin(val_ids)]
-# val_df.to_csv(os.path.join(data_dir, 'MVSA_Multiple', 'val.csv'), index=False)
-# test_df = df_mvsa_multiple[df_mvsa_multiple['ID'].isin(test_ids)]
-# test_df.to_csv(os.path.join(data_dir, 'MVSA_Multiple', 'test.csv'), index=False)
+train_df = df_mvsa_multiple[df_mvsa_multiple['ID'].isin(train_ids)]
+train_df.to_csv(os.path.join(data_dir, 'MVSA_Multiple', 'train.csv'), index=False)
+val_df = df_mvsa_multiple[df_mvsa_multiple['ID'].isin(val_ids)]
+val_df.to_csv(os.path.join(data_dir, 'MVSA_Multiple', 'val.csv'), index=False)
+test_df = df_mvsa_multiple[df_mvsa_multiple['ID'].isin(test_ids)]
+test_df.to_csv(os.path.join(data_dir, 'MVSA_Multiple', 'test.csv'), index=False)

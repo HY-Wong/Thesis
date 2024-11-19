@@ -1,15 +1,16 @@
 import torch
 import torch.nn as nn
 import torchvision
-import numpy as np
 import open_clip
 
-from typing import List, Dict, Tuple, Union, Any
 from transformers import BertModel
 from open_clip.transformer import text_global_pool
 
 
 class VisualEncoder(nn.Module):
+	"""
+	Encode images using pre-traineds.
+	"""
 	def __init__(self, model: str, finetune: bool, embedding_dim: int):
 		super().__init__()
 		self.model = model
@@ -43,6 +44,9 @@ class VisualEncoder(nn.Module):
 
 
 class TextEncoder(nn.Module):
+	"""
+	Encode texts using pre-trained models, obtaining both token-level and sentence-level embeddings.
+	"""
 	def __init__(self, model: str, num_layers: int, embedding_dim: int, hidden_dim: int, dropout: int):
 		super().__init__()
 		self.model = model
@@ -125,13 +129,15 @@ class TextEncoder(nn.Module):
 
 
 class Attention(nn.Module):
+	"""
+	Attention mechanism without a value-projection matrix.
+	"""
 	def __init__(self, q_dim: int, k_dim: int, embedding_dim: int, generator: torch.Generator):
 		super().__init__()
 		self.q_dim = q_dim
 		self.k_dim = k_dim
 		self.embedding_dim = embedding_dim
 
-		# cross attention without value-projection matrix
 		self.w_q = nn.Linear(self.q_dim ,self.embedding_dim, bias=False)
 		self.w_k = nn.Linear(self.k_dim ,self.embedding_dim, bias=False)
 		self.softmax = nn.Softmax(dim=-1)
@@ -141,7 +147,9 @@ class Attention(nn.Module):
 
 
 	def initialize_parameters(self, generator: torch.Generator):
-		# Xavier initialization for the fully connected layers
+		"""
+		Initialize the weights using Xavier uniform distribution.
+		"""
 		nn.init.xavier_uniform_(self.w_q.weight, generator=generator)
 		nn.init.xavier_uniform_(self.w_k.weight, generator=generator)
 
@@ -171,6 +179,19 @@ class Attention(nn.Module):
 
 
 class ITIN(nn.Module):
+	"""
+	A multimodal sentiment analysis model that integrates image and text data.
+	This model enhances the interaction between visual and textual inputs during 
+	the fusion process by aligning image regions with corresponding textual elements.
+	
+	Components of the model:
+	- Visual Encoder
+	- Text Encoder
+	- Object Detection Module
+	- Cross-Modal Alignment Module
+	- Cross-Modal Gating Module
+	- Multimodal Sentiment Classifier
+	"""
 	def __init__(self, cfg, generator: torch.Generator):
 		super().__init__()
 		self.v_base = cfg.model.visual.train_baseline
@@ -256,7 +277,9 @@ class ITIN(nn.Module):
 
 
 	def initialize_parameters(self, generator: torch.Generator):
-		# Xavier initialization for the fully connected layers
+		"""
+		Initialize the weights using Xavier uniform distribution.
+		"""
 		nn.init.xavier_uniform_(self.fc_region.weight, generator=generator)
 		nn.init.zeros_(self.fc_region.bias)
 
@@ -278,7 +301,9 @@ class ITIN(nn.Module):
 
 
 	def l2_norm(self, x: torch.Tensor, dim: int = -1, eps: int = 1e-8):
-		# L2-normalize columns of x
+		"""
+		Perform L2 normalization along the columns of x.
+		"""
 		norm = torch.pow(x, 2).sum(dim=dim, keepdim=True).sqrt() + eps
 		x = torch.div(x, norm)
 		return x

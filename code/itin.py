@@ -33,6 +33,9 @@ device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('
 
 
 def parse_args():
+	"""
+	Parse command-line arguments for training the ITIN model for multimodal sentiment analysis.
+	"""
 	parser = argparse.ArgumentParser(description='Train ITIN for Multimodal Sentiment Analysis')
 
 	parser.add_argument(
@@ -43,7 +46,7 @@ def parse_args():
 		default='mvsa_single', type=str
 	)
 	parser.add_argument(
-		'--region', dest='region', help='######',
+		'--region', dest='region', help='Path to the directory containing region feature files.',
 		default=None, type=str,
 	)
 	parser.add_argument(
@@ -86,14 +89,17 @@ def parse_args():
 	)
 	parser.add_argument('--lr', dest='lr', help='learning rate', default=None, type=float)
 	parser.add_argument('--weight_decay', dest='weight_decay', help='weight decay', default=None, type=float)
-	parser.add_argument('--lambda', dest='_lambda', help='######', default=None, type=float)
-	parser.add_argument('--num_regions', dest='num_regions', help='######', default=None, type=int)
+	parser.add_argument('--lambda', dest='_lambda', help='hyperparameter lambda', default=None, type=float)
+	parser.add_argument('--num_regions', dest='num_regions', help='top regions based on scores', default=None, type=int)
 
 	args = parser.parse_args()
 	return args
 
 
 def max_encoded_len(dataset_name: str, annotations_file: str, tokenizer):
+	"""
+	Calculate the maximum encoded sequence length for a given dataset.
+	"""
 	df = pd.read_csv(annotations_file, keep_default_na=False)
 	max_len = 0
 
@@ -110,7 +116,9 @@ def split_dataset(
 	dataset: Dataset, generator: torch.Generator, batch_size: int, 
 	train_ratio: float = 0.8, val_ratio: float = 0.1
 ):
-	# training set, validation set and test set is split by the ratio of 8:1:1
+	"""
+	Split the given dataset into training, validation, and test sets based on specified ratios.
+	"""
 	train_size = int(train_ratio * len(dataset))
 	val_size = int(val_ratio * len(dataset))
 	test_size = len(dataset) - train_size - val_size
@@ -128,6 +136,9 @@ def plot_detection(
 	image_path: str, detection_path: str, saved_path: str, fasterrcnn_label_names: List[Any], fasterrcnn_attributes: List[Any], 
 	score_threshold: float = 0.8, attr_threshold: float = 0.1, g: torch.Tensor = None, num_regions: int = None
 ):
+	"""
+    Visualize bounding boxes and detected labels on the image.
+    """
 	image = Image.open(image_path)
 	detection = torch.load(detection_path)
 	
@@ -142,7 +153,7 @@ def plot_detection(
 	attrs = detection['attrs'][mask] if 'attrs' in detection else None
 	attr_scores = detection['attr_scores'][mask] if 'attr_scores' in detection else None
 
-	# select the top m region proposals
+	# select the objects with the highest m confidence scores
 	if num_regions != None:
 		boxes = boxes[:num_regions]
 		labels = labels[:num_regions]
@@ -172,12 +183,14 @@ def plot_detection(
 			pred_box[0] = 1
 		if pred_box[1] == 0:
 			pred_box[1] = 1
+		# bounding box
 		plt.gca().add_patch(
 			plt.Rectangle(
 				(pred_box[0], pred_box[1]), pred_box[2] - pred_box[0], pred_box[3] - pred_box[1], 
 				fill=False, edgecolor='red', linewidth=2, alpha=0.5
 			)
 		)
+		# predicted label
 		plt.gca().text(
 			pred_box[0], pred_box[1] - 2, pred_label, bbox=dict(facecolor='blue', alpha=0.5),
 			fontsize=8, color='white'
@@ -188,6 +201,9 @@ def plot_detection(
 
 
 def get_activation(activation: Dict[str, torch.Tensor], name: str):
+	"""
+	Capture the output of a specific layer in a model during a forward pass.
+	"""
 	# the hook signature
 	def hook(model, input, output):
 		activation[name] = output.detach()
@@ -195,6 +211,9 @@ def get_activation(activation: Dict[str, torch.Tensor], name: str):
 
 
 class FocalLoss(nn.Module):
+	"""
+	Implement the Focal Loss for addressing class imbalance in classification tasks.
+	"""
 	def __init__(self, alpha: torch.Tensor, gamma: float = 2.):
 		super().__init__()
 		self.alpha = alpha
@@ -294,7 +313,8 @@ def train(
 				outputs = model(images, texts, attention_masks, region_features)
 				_, predictions = torch.max(outputs, 1)
 
-				###
+				# save for visualizing gating values and attention scores to analyze 
+				# the behavior of the Cross-Modal Gating Module and the Cross-Modal Alignment Module
 				if accuracy > best_accuracy:
 					if use_alignmnet:
 						attn_values = activation['attn'].cpu()
@@ -374,7 +394,7 @@ if __name__ == '__main__':
 	if args.num_regions:
 		cfg.model.region.num_regions = args.num_regions
 
-	###
+	# some ablation models do not compute attention scores or gating values
 	use_alignmnet = True
 	use_gating = True
 	if cfg.model.visual.train_baseline or cfg.model.text.train_baseline or cfg.model.context_baseline:
@@ -499,10 +519,10 @@ if __name__ == '__main__':
 		if use_gating:
 			h2 = itin.sigmoid.register_forward_hook(get_activation(activation, 'g'))
 		
-		###
-		# criterion = nn.CrossEntropyLoss()
-		class_weights = torch.ones(cfg.model.num_classes)
-		criterion = FocalLoss(alpha=class_weights.to(device), gamma=cfg.training.gamma).to(device)
+		# loss function
+		criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+		# class_weights = torch.ones(cfg.model.num_classes)
+		# criterion = FocalLoss(alpha=class_weights.to(device), gamma=cfg.training.gamma).to(device)
 		
 		# optimizer and scheduler
 		# for name, param in itin.named_parameters():
