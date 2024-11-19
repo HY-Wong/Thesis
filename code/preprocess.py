@@ -10,30 +10,30 @@ from torchvision.io import read_image
 
 
 def combine_text_image_label(text_label: Union[str, None], image_label: Union[str, None]):
-	"""
-	Generate a single sentiment label for each image-text pair.
-	"""
-	# invalid labels
-	if text_label == None or image_label == None:
-		return 'invalid'
-	# consistent labels
-	if text_label == image_label:
-		return text_label
-	# positive / negative & neutral -> positive / negative
-	if text_label == 'neutral':
-		return image_label
-	if image_label == 'neutral':
-		return text_label
-	# inconsistent labels
-	return 'inconsistent'
+    """
+    Generate a single sentiment label for each image-text pair.
+    """
+    # invalid labels
+    if text_label == None or image_label == None:
+        return 'invalid'
+    # consistent labels
+    if text_label == image_label:
+        return text_label
+    # positive / negative & neutral -> positive / negative
+    if text_label == 'neutral':
+        return image_label
+    if image_label == 'neutral':
+        return text_label
+    # inconsistent labels
+    return 'inconsistent'
 
 
 def remove_url(text: str):
-	"""
-	Remove URLs matching the patterns: 'http', 'http:', 'http:/', and 'https:/'.
-	"""
-	url_pattern = r'http[s]?\S+'
-	return re.sub(url_pattern, '', text)
+    """
+    Remove URLs matching the patterns: 'http', 'http:', 'http:/', and 'https:/'.
+    """
+    url_pattern = r'http[s]?\S+'
+    return re.sub(url_pattern, '', text)
 
 
 data_dir = '../data'
@@ -42,24 +42,24 @@ label_mapping = {'positive': 0, 'neutral': 1, 'negative': 2}
 # MVSA-Single
 data = []
 with open(os.path.join(data_dir, 'MVSA_Single', 'labelResultAll.txt'), 'r') as annotations_file:
-	# skip the column name
-	next(annotations_file)
-	
-	for line in annotations_file:
-		split_line = line.strip().split()
+    # skip the column name
+    next(annotations_file)
+    
+    for line in annotations_file:
+        split_line = line.strip().split()
 
-		# read the text and store it into the CSV file
-		txt_path = os.path.join(data_dir, 'MVSA_Single', 'data', f'{split_line[0]}.txt')
-		with open(txt_path, 'rb') as f:
-			text = f.read()
-			text = text.decode('ascii', 'ignore')
+        # read the text and store it into the CSV file
+        txt_path = os.path.join(data_dir, 'MVSA_Single', 'data', f'{split_line[0]}.txt')
+        with open(txt_path, 'rb') as f:
+            text = f.read()
+            text = text.decode('ascii', 'ignore')
 
-		(text_label, image_label) = split_line[1].split(',')
-		# data.append({
-		#     'ID': split_line[0], 'Text': text, 'Text label': text_label, 'Image label': image_label, 
-		#     'Label': combine_text_image_label(text_label, image_label)
-		# })
-		data.append({'ID': split_line[0], 'Text': text, 'Label': combine_text_image_label(text_label, image_label)})
+        (text_label, image_label) = split_line[1].split(',')
+        # data.append({
+        #     'ID': split_line[0], 'Text': text, 'Text label': text_label, 'Image label': image_label, 
+        #     'Label': combine_text_image_label(text_label, image_label)
+        # })
+        data.append({'ID': split_line[0], 'Text': text, 'Label': combine_text_image_label(text_label, image_label)})
 
 df_mvsa_single = pd.DataFrame(data)
 # print(df_mvsa_single.head())
@@ -78,13 +78,13 @@ df_mvsa_single.to_csv(os.path.join(data_dir, 'MVSA_Single', 'all.csv'), index=Fa
 
 # the training-test split follows CLMLF model
 with open(os.path.join(data_dir, 'MVSA_Single', 'train.json'), 'r') as file:
-	train_data = json.load(file)
+    train_data = json.load(file)
 train_ids = [item['id'] for item in train_data]
 with open(os.path.join(data_dir, 'MVSA_Single', 'val.json'), 'r') as file:
-	val_data = json.load(file)
+    val_data = json.load(file)
 val_ids = [item['id'] for item in val_data]
 with open(os.path.join(data_dir, 'MVSA_Single', 'test.json'), 'r') as file:
-	test_data = json.load(file)
+    test_data = json.load(file)
 test_ids = [item['id'] for item in test_data]
 
 # required for creating a custom dataset in PyTorch
@@ -98,42 +98,42 @@ test_df.to_csv(os.path.join(data_dir, 'MVSA_Single', 'test.csv'), index=False)
 # MVSA-Multiple
 data = []
 with open(os.path.join(data_dir, 'MVSA_Multiple', 'labelResultAll.txt'), 'r') as annotations_file:
-	# skip the column name
-	next(annotations_file)
-	
-	for line in annotations_file:
-		split_line = line.strip().split()
-		
-		# ignore empty image files and truncated images
-		image_path = os.path.join(data_dir, 'MVSA_Multiple', 'data', f'{split_line[0]}.jpg')
-		try:
-			image = read_image(image_path)
-		except RuntimeError:
-			continue
+    # skip the column name
+    next(annotations_file)
+    
+    for line in annotations_file:
+        split_line = line.strip().split()
+        
+        # ignore empty image files and truncated images
+        image_path = os.path.join(data_dir, 'MVSA_Multiple', 'data', f'{split_line[0]}.jpg')
+        try:
+            image = read_image(image_path)
+        except RuntimeError:
+            continue
 
-		# read the text and store it into the CSV file
-		txt_path = os.path.join(data_dir, 'MVSA_Multiple', 'data', f'{split_line[0]}.txt')
-		with open(txt_path, 'rb') as f:
-			text = f.read()
-			text = text.decode('ascii', 'ignore')
+        # read the text and store it into the CSV file
+        txt_path = os.path.join(data_dir, 'MVSA_Multiple', 'data', f'{split_line[0]}.txt')
+        with open(txt_path, 'rb') as f:
+            text = f.read()
+            text = text.decode('ascii', 'ignore')
 
-		text_label_dict = defaultdict(lambda: 0)
-		image_label_dict = defaultdict(lambda: 0)
-		for labels in split_line[1:]:
-			(text_label, image_label) = labels.split(',')
-			text_label_dict[text_label] += 1
-			image_label_dict[image_label] += 1
-		
-		# annotated label is considered valid only when at least two of three annotators agree
-		(max_label, max_count) = max(text_label_dict.items(), key=lambda a: a[1])
-		text_label = max_label if max_count >= 2 else None
-		(max_label, max_count) = max(image_label_dict.items(), key=lambda a: a[1])
-		image_label = max_label if max_count >= 2 else None
-		# data.append({
-		#     'ID': split_line[0], 'Text': text, 'Text label': text_label, 'Image label': image_label, 
-		#     'Label': combine_text_image_label(text_label, image_label)
-		# })
-		data.append({'ID': split_line[0], 'Text': text, 'Label': combine_text_image_label(text_label, image_label)})
+        text_label_dict = defaultdict(lambda: 0)
+        image_label_dict = defaultdict(lambda: 0)
+        for labels in split_line[1:]:
+            (text_label, image_label) = labels.split(',')
+            text_label_dict[text_label] += 1
+            image_label_dict[image_label] += 1
+        
+        # annotated label is considered valid only when at least two of three annotators agree
+        (max_label, max_count) = max(text_label_dict.items(), key=lambda a: a[1])
+        text_label = max_label if max_count >= 2 else None
+        (max_label, max_count) = max(image_label_dict.items(), key=lambda a: a[1])
+        image_label = max_label if max_count >= 2 else None
+        # data.append({
+        #     'ID': split_line[0], 'Text': text, 'Text label': text_label, 'Image label': image_label, 
+        #     'Label': combine_text_image_label(text_label, image_label)
+        # })
+        data.append({'ID': split_line[0], 'Text': text, 'Label': combine_text_image_label(text_label, image_label)})
 
 df_mvsa_multiple = pd.DataFrame(data)
 # print(df_mvsa_multiple.head())
@@ -152,13 +152,13 @@ df_mvsa_multiple.to_csv(os.path.join(data_dir, 'MVSA_Multiple', 'all.csv'), inde
 
 # the training-test split follows CLMLF model
 with open(os.path.join(data_dir, 'MVSA_Multiple', 'train.json'), 'r') as file:
-	train_data = json.load(file)
+    train_data = json.load(file)
 train_ids = [item['id'] for item in train_data]
 with open(os.path.join(data_dir, 'MVSA_Multiple', 'val.json'), 'r') as file:
-	val_data = json.load(file)
+    val_data = json.load(file)
 val_ids = [item['id'] for item in val_data]
 with open(os.path.join(data_dir, 'MVSA_Multiple', 'test.json'), 'r') as file:
-	test_data = json.load(file)
+    test_data = json.load(file)
 test_ids = [item['id'] for item in test_data]
 
 # required for creating a custom dataset in PyTorch
